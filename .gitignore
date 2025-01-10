@@ -4,6 +4,7 @@
 # job files, except for .gitkeep
 jobs/**
 !jobs/**/.gitkeep
+*.gcode
 
 # venv
 venv/
