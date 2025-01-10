@@ -61,15 +61,25 @@ def get_paths_for_line(font_path, text, scale=1.0, origin=(0, 0)):
     return all_paths
 
 def paths_to_gcode(paths, feedrate=6000, pen_down="M3", pen_up="M5", start_gcode="G21", end_gcode="G1 X0 Y0 F3000"):
+    bed_size = (125, 125)
     print("Converting paths to gcode...")
     gcode = start_gcode
     gcode += f"{pen_up}\n"
     gcode += f"G1 F{feedrate}\n"
     for path in paths:
-        gcode += f"G0 X{path[0][0]} Y{path[0][1]}\n"
+        if path[0][0] > bed_size[0] or path[0][1] > bed_size[1]:
+            print(f"Warning: Path start out of bounds: ({path[0][0]:.2f}, {path[0][1]:.2f})")
+            path[0] = (min(path[0][0], bed_size[0]), min(path[0][1], bed_size[1]))
+            print(f"Clamped to: ({path[0][0]:.2f}, {path[0][1]:.2f})")
+        gcode += f"G0 X{path[0][0]:.2f} Y{path[0][1]:.2f}\n"
         gcode += f"{pen_down}\n"
         for x, y in path[1:]:
-            gcode += f"G1 X{x} Y{y}\n"
+            if x > bed_size[0] or y > bed_size[1]:
+                print(f"Warning: Path out of bounds: ({x:.2f}, {y:.2f})")
+                x = min(x, bed_size[0])
+                y = min(y, bed_size[1])
+                print(f"Clamped to: ({x:.2f}, {y:.2f})")
+            gcode += f"G1 X{x:.2f} Y{y:.2f}\n"
         gcode += f"{pen_up}\n"
     gcode += end_gcode
     print("Gcode conversion complete!")
@@ -175,7 +185,7 @@ if __name__ == "__main__":
     
     font_path = os.getenv("FONT_PATH")
     message = "Hi Fiona!\n\nI saw you shipped your <PROJECT_NAME> project. I'm so excited for you! Keep up the great work, and I can't wait to see what else you make.\n\n-The Postcard Writer"
-    paths = construct_postcard_paths(font_path, message, "Fiona Hackworth\n1234 Main St\nCity, State 12345", False, True)
+    paths = construct_postcard_paths(font_path, message, "Fiona Hackworth\n1234 Main St\nCity, State 12345")
     gcode = paths_to_gcode(paths)
     with open("postcard.gcode", "w") as f:
         f.write(gcode)
