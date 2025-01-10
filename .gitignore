@@ -1,0 +1,9 @@
+# secrets
+.env
+
+# job files, except for .gitkeep
+jobs/**
+!jobs/**/.gitkeep
+
+# venv
+venv/
